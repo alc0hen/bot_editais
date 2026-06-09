@@ -70,40 +70,68 @@ def save_state(state):
     except Exception as e:
         logging.error(f"Erro ao salvar state.json: {e}")
 
+def fetch_email_list():
+    url = os.environ.get('EMAILS_JSON_URL')
+    if not url:
+        logging.warning("Variável EMAILS_JSON_URL não configurada.")
+        return []
+
+    try:
+        r = requests.get(url, timeout=10)
+        r.raise_for_status()
+        emails = r.json()
+        if isinstance(emails, list):
+            return emails
+        else:
+            logging.error("O arquivo JSON de e-mails deve ser uma lista (array).")
+            return []
+    except Exception as e:
+        logging.error(f"Erro ao buscar lista de e-mails de {url}: {e}")
+        return []
+
 def send_email(new_editais):
     email_user = os.environ.get('EMAIL_USER')
     email_pass = os.environ.get('EMAIL_PASS')
-    email_to = os.environ.get('EMAIL_TO')
+    emails_json_url = os.environ.get('EMAILS_JSON_URL')
     smtp_server = os.environ.get('SMTP_SERVER', 'smtp.gmail.com')
     smtp_port = int(os.environ.get('SMTP_PORT', 587))
 
-    if not email_user or not email_pass or not email_to:
-        logging.warning("Variáveis de ambiente de e-mail não configuradas (EMAIL_USER, EMAIL_PASS, EMAIL_TO). Pulando o envio de e-mail.")
+    if not email_user or not email_pass or not emails_json_url:
+        logging.warning("Variáveis de ambiente de e-mail não configuradas (EMAIL_USER, EMAIL_PASS, EMAILS_JSON_URL). Pulando o envio de e-mail.")
         return False
 
-    msg = MIMEMultipart()
-    msg['From'] = email_user
-    msg['To'] = email_to
-    msg['Subject'] = 'Novos Editais da UFAL Encontrados!'
+    email_list = fetch_email_list()
+    if not email_list:
+        logging.warning("Lista de e-mails vazia ou falha ao buscar. Pulando envio.")
+        return False
 
     body = "Os seguintes editais foram publicados ou atualizados:\n\n"
     for ed in new_editais:
         status_text = f" [{ed['status']}]" if ed['status'] else ""
         body += f"- {ed['title']}{status_text}\n  Link: {ed['link']}\n\n"
 
-    msg.attach(MIMEText(body, 'plain', 'utf-8'))
-
     try:
         server = smtplib.SMTP(smtp_server, smtp_port)
         server.starttls()
         server.login(email_user, email_pass)
-        text = msg.as_string()
-        server.sendmail(email_user, email_to, text)
+
+        for email_to in email_list:
+            msg = MIMEMultipart()
+            msg['From'] = email_user
+            msg['To'] = email_to
+            msg['Subject'] = 'Novos Editais da UFAL Encontrados!'
+            msg.attach(MIMEText(body, 'plain', 'utf-8'))
+
+            try:
+                server.sendmail(email_user, email_to, msg.as_string())
+                logging.info(f"E-mail enviado com sucesso para {email_to}")
+            except Exception as e:
+                logging.error(f"Erro ao enviar e-mail para {email_to}: {e}")
+
         server.quit()
-        logging.info("E-mail enviado com sucesso!")
         return True
     except Exception as e:
-        logging.error(f"Erro ao enviar e-mail: {e}")
+        logging.error(f"Erro ao conectar ao servidor SMTP: {e}")
         return False
 
 def job():
@@ -134,7 +162,7 @@ def job():
         # Send email
         email_sent = send_email(new_editais)
 
-        email_configured = bool(os.environ.get('EMAIL_USER') and os.environ.get('EMAIL_PASS') and os.environ.get('EMAIL_TO'))
+        email_configured = bool(os.environ.get('EMAIL_USER') and os.environ.get('EMAIL_PASS') and os.environ.get('EMAILS_JSON_URL'))
         if email_sent or not email_configured:
             save_state(state)
     else:

@@ -22,9 +22,17 @@ Para configurar, crie um arquivo chamado `.env` na mesma pasta do script (você 
 ```ini
 EMAIL_USER=seu.email@gmail.com
 EMAIL_PASS=sua_senha_ou_app_password
-EMAIL_TO=destino@email.com
+EMAILS_JSON_URL=https://raw.githubusercontent.com/usuario/repo/main/emails.json
 SMTP_SERVER=smtp.gmail.com
 SMTP_PORT=587
+```
+
+O `EMAILS_JSON_URL` deve ser o link direto ("raw") para um arquivo `.json` (por exemplo, hospedado no GitHub) que contenha uma lista de e-mails em formato array, como este:
+```json
+[
+  "email1@exemplo.com",
+  "email2@exemplo.com"
+]
 ```
 
 > **Dica**: Se você usa o Gmail e tem a verificação em duas etapas ativada, crie uma "App Password" (Senha de Aplicativo) nas configurações do Google em vez de usar sua senha principal.
