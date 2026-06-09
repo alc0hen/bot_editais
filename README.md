@@ -15,20 +15,19 @@ pip install -r requirements.txt
 
 ## Configuração
 
-O bot precisa de credenciais de e-mail para enviar as notificações. Configure as seguintes variáveis de ambiente:
+O bot precisa de credenciais de e-mail para enviar as notificações. O projeto usa a biblioteca `python-dotenv` para carregar essas configurações a partir de um arquivo `.env`.
 
-- `EMAIL_USER`: Seu endereço de e-mail (ex: `seu.email@gmail.com`)
-- `EMAIL_PASS`: Sua senha ou "App Password" (se usar Gmail)
-- `EMAIL_TO`: O endereço de e-mail que receberá os alertas
-- `SMTP_SERVER`: O servidor SMTP (padrão: `smtp.gmail.com`)
-- `SMTP_PORT`: A porta do SMTP (padrão: `587`)
+Para configurar, crie um arquivo chamado `.env` na mesma pasta do script (você pode copiar o `.env.example` se quiser) com o seguinte conteúdo:
 
-No Linux/macOS:
-```bash
-export EMAIL_USER="seu.email@gmail.com"
-export EMAIL_PASS="sua_senha"
-export EMAIL_TO="destino@email.com"
+```ini
+EMAIL_USER=seu.email@gmail.com
+EMAIL_PASS=sua_senha_ou_app_password
+EMAIL_TO=destino@email.com
+SMTP_SERVER=smtp.gmail.com
+SMTP_PORT=587
 ```
+
+> **Dica**: Se você usa o Gmail e tem a verificação em duas etapas ativada, crie uma "App Password" (Senha de Aplicativo) nas configurações do Google em vez de usar sua senha principal.
 
 ## Execução
 
